@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>For Aidana</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>♥</text></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0f1a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Caveat:wght@400;500;600&family=Noto+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --midnight: #0b0f1a;
+    --midnight-blue: #141a2e;
+    --midnight-light: #1e2744;
+    --navy: #2a3558;
+    --navy-light: #3a4a70;
+    --rose: #c4727f;
+    --rose-light: #d4939e;
+    --rose-pale: #e8bcc2;
+    --rose-faint: #f5d8dc;
+    --rose-deep: #9e4f5c;
+    --champagne: #c9a55a;
+    --champagne-light: #dfc07a;
+    --champagne-bright: #f0dba0;
+    --champagne-dark: #a08040;
+    --cream: #f0ebe0;
+    --cream-soft: #d0c8bc;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    width: 100%; min-height: 100vh; overflow-x: hidden;
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--midnight); color: var(--cream);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #petals-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 2s ease; }
+  #petals-canvas.visible { opacity: 1; }
+
+  /* ENVELOPE */
+  #envelope-intro {
+    position: fixed; inset: 0; z-index: 200; background: var(--midnight);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    cursor: pointer; transition: opacity 1.2s ease;
+  }
+  #envelope-intro.hidden { opacity: 0; pointer-events: none; }
+  .envelope { position: relative; width: 260px; height: 170px; transition: transform 0.8s ease; perspective: 800px; }
+  .envelope-body {
+    position: absolute; bottom: 0; width: 260px; height: 170px;
+    background: linear-gradient(145deg, #f5ede0, #e8ddd0); border-radius: 4px;
+    box-shadow: 0 15px 50px rgba(0,0,0,0.4), 0 0 80px rgba(196,114,127,0.08);
+  }
+  .envelope-inner-v {
+    position: absolute; top: 0; left: 0; width: 0; height: 0;
+    border-left: 130px solid #efe5d6; border-right: 130px solid #efe5d6;
+    border-bottom: 90px solid transparent; z-index: 1;
+  }
+  .envelope-flap {
+    position: absolute; top: 0; left: 0; width: 0; height: 0;
+    border-left: 130px solid transparent; border-right: 130px solid transparent;
+    border-top: 100px solid #e0d4c4; z-index: 3;
+    transform-origin: top center; transition: transform 0.7s cubic-bezier(0.22,1,0.36,1);
+  }
+  .envelope.open .envelope-flap { transform: rotateX(180deg); }
+  .envelope-seal {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    width: 40px; height: 40px; background: var(--rose); border-radius: 50%; z-index: 4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; color: white; box-shadow: 0 2px 10px rgba(196,114,127,0.4);
+    transition: opacity 0.3s ease;
+  }
+  .envelope.open .envelope-seal { opacity: 0; }
+  .envelope-name {
+    position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+    font-family: 'Caveat', cursive; font-size: 1.6rem; color: var(--navy);
+    z-index: 2; white-space: nowrap;
+  }
+  .envelope-tap {
+    margin-top: 2.5rem; font-family: 'Noto Sans', sans-serif; font-size: 0.6rem;
+    letter-spacing: 0.35em; text-transform: uppercase; color: var(--champagne-dark);
+    animation: pulse-soft 2.5s ease-in-out infinite;
+  }
+  @keyframes pulse-soft { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* CONSTELLATION */
+  #constellation-intro {
+    position: fixed; inset: 0; z-index: 150; background: var(--midnight);
+    display: none; align-items: center; justify-content: center; flex-direction: column;
+    cursor: pointer; transition: opacity 1s ease;
+  }
+  #constellation-intro.active { display: flex; }
+  #constellation-intro.hidden { opacity: 0; pointer-events: none; }
+  #constellation-canvas { position: absolute; inset: 0; }
+  .constellation-content { position: relative; z-index: 2; text-align: center; opacity: 0; transition: opacity 1.2s ease; }
+  .constellation-content.visible { opacity: 1; }
+  .c-label { font-family: 'Noto Sans', sans-serif; font-size: 0.6rem; font-weight: 300; letter-spacing: 0.4em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 1rem; }
+  .c-name { font-size: clamp(3.5rem,10vw,7rem); font-weight: 300; font-style: italic; color: var(--rose-pale); line-height: 1; margin-bottom: 0.4rem; text-shadow: 0 0 60px rgba(196,114,127,0.25), 0 0 120px rgba(196,114,127,0.1); }
+  .c-kazakh-name { font-size: 1.3rem; color: var(--champagne); margin-bottom: 1.5rem; opacity: 0.7; }
+  .c-sub { font-size: clamp(1rem,3vw,1.2rem); font-weight: 300; font-style: italic; color: var(--cream-soft); margin-bottom: 0.6rem; }
+  .c-letters { font-family: 'Caveat', cursive; font-size: clamp(1.1rem,3vw,1.4rem); color: var(--rose); margin-bottom: 2.5rem; }
+  .c-cta { font-family: 'Noto Sans', sans-serif; font-size: 0.55rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--champagne-dark); animation: pulse-soft 2.5s ease-in-out infinite; }
+
+  /* LAYOUT */
+  .page-wrapper { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
+  section { width: 100%; min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1.5rem; position: relative; }
+  .inner { max-width: 620px; width: 100%; text-align: center; }
+  .fade-in { opacity: 0; transform: translateY(35px); transition: all 1s cubic-bezier(0.22,1,0.36,1); }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+  .section-divider { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .section-divider::before { content: '✦'; color: var(--rose-deep); font-size: 0.65rem; opacity: 0.2; position: relative; z-index: 1; }
+  .section-divider::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 1px; background: linear-gradient(90deg, transparent, rgba(196,114,127,0.12), transparent); }
+
+  /* COUNTER */
+  #counter-section { background: radial-gradient(ellipse at 30% 40%, rgba(196,114,127,0.06) 0%, transparent 55%), radial-gradient(ellipse at 70% 60%, rgba(201,165,90,0.04) 0%, transparent 50%); }
+  .counter-label { font-family: 'Noto Sans', sans-serif; font-size: 0.58rem; font-weight: 300; letter-spacing: 0.4em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 2rem; }
+  .counter-since { font-size: 1.05rem; font-style: italic; color: var(--cream-soft); margin-bottom: 2rem; opacity: 0.7; }
+  .counter-grid { display: flex; justify-content: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+  .counter-unit { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+  .counter-number { font-size: clamp(2.5rem,8vw,4.2rem); font-weight: 300; color: var(--rose-pale); line-height: 1; text-shadow: 0 0 30px rgba(196,114,127,0.15); font-variant-numeric: tabular-nums; }
+  .counter-unit-label { font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--cream-soft); margin-top: 0.5rem; opacity: 0.6; }
+  .counter-sep { color: var(--rose-deep); font-size: 1.8rem; opacity: 0.3; align-self: center; margin-top: -0.5rem; }
+  .counter-subtext { font-size: 1.1rem; font-style: italic; color: var(--champagne); opacity: 0.7; }
+  .scroll-hint { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--champagne-dark); opacity: 0.4; animation: float-y 2s ease-in-out infinite; }
+  .scroll-hint::after { content: ''; display: block; width: 1px; height: 25px; background: linear-gradient(to bottom, var(--champagne-dark), transparent); margin: 0.6rem auto 0; }
+  @keyframes float-y { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
+
+  /* TIMEZONE */
+  #timezone-section { min-height: 50vh; padding: 4rem 1.5rem; background: radial-gradient(ellipse at 50% 50%, rgba(42,53,88,0.15) 0%, transparent 55%); }
+  .tz-row { display: flex; justify-content: center; align-items: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; }
+  .tz-block { text-align: center; }
+  .tz-city { font-family: 'Noto Sans', sans-serif; font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 0.6rem; }
+  .tz-time { font-size: clamp(2rem,6vw,3rem); font-weight: 300; color: var(--rose-pale); font-variant-numeric: tabular-nums; }
+  .tz-divider { color: var(--champagne-dark); font-size: 1rem; opacity: 0.3; }
+  .tz-message { font-size: 1.05rem; font-style: italic; color: var(--champagne); opacity: 0.7; max-width: 400px; margin: 0 auto; line-height: 1.6; }
+
+  /* LETTER */
+  #letter-section { min-height: auto; padding: 5rem 1.5rem; background: radial-gradient(ellipse at 50% 30%, rgba(196,114,127,0.04) 0%, transparent 55%); }
+  .letter-container { max-width: 560px; width: 100%; text-align: left; margin: 0 auto; }
+  .letter-header { text-align: center; margin-bottom: 3rem; }
+  .letter-header-ornament { font-size: 1.4rem; color: var(--rose); opacity: 0.4; margin-bottom: 0.8rem; }
+  .letter-header-title { font-family: 'Noto Sans', sans-serif; font-size: 0.55rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--rose-deep); }
+  .letter-greeting { font-family: 'Caveat', cursive; font-size: 1.5rem; color: var(--rose-light); margin-bottom: 2rem; opacity: 0; transition: opacity 0.8s ease; }
+  .letter-block { margin-bottom: 1.5rem; opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.22,1,0.36,1); }
+  .letter-block.revealed { opacity: 1; transform: translateY(0); }
+  .letter-text { font-size: clamp(1rem,2.8vw,1.15rem); font-weight: 300; line-height: 1.9; color: var(--cream-soft); }
+  .letter-text em { color: var(--rose-pale); font-style: normal; font-weight: 400; }
+  .letter-break { text-align: center; color: var(--rose-deep); font-size: 0.8rem; margin: 2rem 0; opacity: 0; letter-spacing: 0.8em; transition: opacity 0.6s ease; }
+  .letter-break.revealed { opacity: 0.3; }
+  .letter-closing { font-family: 'Caveat', cursive; font-size: 1.4rem; color: var(--champagne); text-align: right; margin-top: 2.5rem; opacity: 0; transition: opacity 1s ease; }
+
+  /* IF I COULD */
+  #ificould-section { background: radial-gradient(ellipse at 50% 50%, rgba(196,114,127,0.06) 0%, transparent 50%); }
+  .ificould-label { font-family: 'Noto Sans', sans-serif; font-size: 0.55rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 2rem; }
+  .ificould-text { font-size: clamp(1.2rem,3.5vw,1.6rem); font-weight: 300; font-style: italic; line-height: 1.8; color: var(--cream); max-width: 480px; margin: 0 auto; }
+  .ificould-text em { color: var(--rose-pale); font-style: normal; font-weight: 400; }
+
+  /* MAP */
+  #map-section { background: radial-gradient(ellipse at 50% 50%, rgba(42,53,88,0.3) 0%, transparent 60%); }
+  .map-label { font-family: 'Noto Sans', sans-serif; font-size: 0.55rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--champagne-dark); margin-bottom: 1rem; }
+  .map-distance { font-size: 1.05rem; font-style: italic; color: var(--cream-soft); opacity: 0.6; margin-bottom: 2rem; }
+  #map-canvas { width: 100%; max-width: 500px; height: 300px; margin: 0 auto 2rem; display: block; }
+  .map-message { font-size: clamp(1.05rem,3vw,1.25rem); font-weight: 300; font-style: italic; color: var(--champagne); max-width: 440px; margin: 0 auto; line-height: 1.7; opacity: 0; transition: opacity 1s ease 0.5s; }
+  .map-message.visible { opacity: 1; }
+  .map-moonlight { font-size: clamp(0.95rem,2.5vw,1.1rem); color: var(--rose-light); font-style: italic; margin: 1.5rem auto 0; opacity: 0; transition: opacity 1s ease 1.5s; max-width: 440px; line-height: 1.7; }
+  .map-moonlight.visible { opacity: 0.8; }
+
+  /* JAR */
+  #jar-section { background: radial-gradient(ellipse at 50% 50%, rgba(196,114,127,0.05) 0%, transparent 55%); }
+  .jar-title { font-family: 'Noto Sans', sans-serif; font-size: 0.58rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 0.6rem; }
+  .jar-subtitle { font-size: 1.1rem; font-style: italic; color: var(--cream-soft); margin-bottom: 2.5rem; opacity: 0.6; }
+  .jar-visual { position: relative; width: 180px; height: 240px; margin: 0 auto 1.8rem; cursor: pointer; transition: transform 0.3s ease; }
+  .jar-visual:hover { transform: scale(1.02); }
+  .jar-visual:active { transform: scale(0.97); }
+  .jar-body { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 145px; height: 185px; border: 1.5px solid var(--rose-deep); border-radius: 0 0 25px 25px; background: linear-gradient(135deg, rgba(20,26,46,0.7), rgba(11,15,26,0.9)); overflow: hidden; }
+  .jar-body::before { content: ''; position: absolute; top: 0; left: 8%; width: 25%; height: 100%; background: linear-gradient(90deg, rgba(196,114,127,0.06), transparent); pointer-events: none; }
+  .jar-lid { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: 158px; height: 32px; background: linear-gradient(180deg, var(--champagne), var(--champagne-dark)); border-radius: 6px 6px 3px 3px; box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
+  .jar-lid::before { content: ''; position: absolute; bottom: -7px; left: 10%; width: 80%; height: 8px; background: var(--champagne-dark); border-radius: 0 0 3px 3px; }
+  .jar-notes-inside { position: absolute; bottom: 8px; left: 8px; right: 8px; height: 110px; display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; overflow: hidden; }
+  .jar-mini-note { width: 24px; height: 15px; border-radius: 2px; transform: rotate(var(--rot)); }
+  .jar-click-text { font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--champagne-dark); margin-bottom: 2rem; animation: pulse-soft 2.5s ease-in-out infinite; }
+  .jar-pulled-note { min-height: 100px; display: flex; align-items: center; justify-content: center; padding: 1.2rem; max-width: 440px; margin: 0 auto; }
+  .jar-note-content { font-family: 'Caveat', cursive; font-size: clamp(1.2rem,3.5vw,1.55rem); color: var(--rose-pale); line-height: 1.5; opacity: 0; transform: translateY(12px) rotate(-1deg); transition: all 0.6s cubic-bezier(0.22,1,0.36,1); }
+  .jar-note-content.visible { opacity: 1; transform: translateY(0) rotate(-1deg); }
+  .jar-counter { font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.2em; color: var(--rose-deep); margin-top: 1.2rem; opacity: 0.4; }
+
+  /* STORM */
+  #storm-section { position: relative; overflow: hidden; background: var(--midnight); }
+  #storm-container { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .storm-item { position: absolute; font-size: 1.4rem; opacity: 0; animation: storm-fall linear forwards; pointer-events: none; }
+  @keyframes storm-fall { 0%{opacity:0;transform:translateY(-30px) rotate(0deg) scale(0.5)} 10%{opacity:0.7;transform:translateY(0) scale(1)} 90%{opacity:0.7} 100%{opacity:0;transform:translateY(calc(100vh + 30px)) rotate(var(--end-rot)) scale(0.8)} }
+  .storm-text { position: relative; z-index: 2; max-width: 460px; margin: 0 auto; }
+  .storm-main { font-size: clamp(1.3rem,4vw,1.8rem); font-weight: 300; font-style: italic; color: var(--cream); line-height: 1.7; margin-bottom: 1rem; }
+  .storm-main em { color: var(--rose-pale); font-style: normal; font-weight: 400; }
+  .storm-sub { font-family: 'Caveat', cursive; font-size: 1.3rem; color: var(--champagne); opacity: 0.8; }
+
+  /* PROMISES */
+  #promises-section { background: radial-gradient(ellipse at 50% 50%, rgba(196,114,127,0.05) 0%, transparent 50%); }
+  .promises-title { font-family: 'Noto Sans', sans-serif; font-size: 0.58rem; letter-spacing: 0.4em; text-transform: uppercase; color: var(--champagne-dark); margin-bottom: 3rem; }
+  .promise { margin-bottom: 2.5rem; opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.22,1,0.36,1); }
+  .promise.revealed { opacity: 1; transform: translateY(0); }
+  .promise-number { font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.3em; color: var(--rose-deep); margin-bottom: 0.8rem; opacity: 0.5; }
+  .promise-text { font-size: clamp(1.1rem,3vw,1.3rem); font-weight: 300; font-style: italic; line-height: 1.7; color: var(--cream); max-width: 440px; margin: 0 auto; }
+  .promise-text em { color: var(--rose-pale); font-style: normal; }
+
+  /* FINALE */
+  #finale-section { position: relative; overflow: hidden; background: radial-gradient(ellipse at 50% 50%, rgba(196,114,127,0.06) 0%, transparent 50%); padding-bottom: max(3rem, env(safe-area-inset-bottom)); }
+  #shooting-stars-canvas { position: absolute; inset: 0; pointer-events: none; }
+  .finale-heart { font-size: 2.8rem; margin-bottom: 2rem; animation: heartbeat 2s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(196,114,127,0.35)); color: var(--rose); }
+  @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.2)} 28%{transform:scale(1)} 42%{transform:scale(1.13)} 56%{transform:scale(1)} }
+  .finale-kazakh { font-size: clamp(2rem,6vw,3.2rem); font-weight: 400; color: var(--rose-pale); margin-bottom: 0.5rem; text-shadow: 0 0 50px rgba(196,114,127,0.2); }
+  .finale-translation { font-family: 'Noto Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--rose-deep); margin-bottom: 2.5rem; }
+  .finale-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--rose-deep), transparent); margin: 0 auto 2rem; }
+  .finale-message { font-size: clamp(1rem,3vw,1.2rem); font-weight: 300; line-height: 1.9; color: var(--cream-soft); max-width: 470px; font-style: italic; margin: 0 auto 2.5rem; }
+  .finale-sign { font-family: 'Caveat', cursive; font-size: 1.7rem; color: var(--champagne); }
+  .finale-date { font-family: 'Noto Sans', sans-serif; font-size: 0.5rem; letter-spacing: 0.2em; color: var(--champagne-dark); margin-top: 0.8rem; opacity: 0.4; }
+
+  /* TEXTURE */
+  body::after { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23c4727f' fill-opacity='0.008'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E"); pointer-events: none; z-index: 0; }
+
+  @media (max-width: 500px) {
+    .counter-sep { display: none; }
+    .counter-unit { min-width: 60px; }
+    .counter-grid { gap: 0.4rem; justify-content: space-evenly; }
+    section { padding: 2.5rem 1.2rem; padding-left: max(1.2rem, env(safe-area-inset-left)); padding-right: max(1.2rem, env(safe-area-inset-right)); }
+    .tz-row { gap: 1.2rem; }
+    .tz-time { font-size: clamp(1.8rem, 6vw, 2.5rem); }
+    .jar-visual { width: 150px; height: 210px; }
+    .jar-body { width: 120px; height: 155px; }
+    .jar-lid { width: 135px; height: 28px; }
+    .jar-lid::before { bottom: -6px; height: 7px; }
+    .envelope { width: 220px; height: 145px; }
+    .envelope-body { width: 220px; height: 145px; }
+    .envelope-inner-v { border-left-width: 110px; border-right-width: 110px; border-bottom-width: 75px; }
+    .envelope-flap { border-left-width: 110px; border-right-width: 110px; border-top-width: 85px; }
+    .envelope-seal { top: 50px; width: 35px; height: 35px; font-size: 0.95rem; }
+    .envelope-name { bottom: 42px; font-size: 1.4rem; }
+    .letter-container { padding: 0 0.3rem; }
+    .ificould-text { font-size: clamp(1.1rem, 3.5vw, 1.4rem); }
+    #map-canvas { height: 250px; }
+    .promise { margin-bottom: 2rem; }
+    .finale-kazakh { font-size: clamp(1.8rem, 6vw, 2.8rem); }
+  }
+
+  @media (max-width: 360px) {
+    .counter-unit { min-width: 52px; }
+    .counter-number { font-size: clamp(2rem, 8vw, 3rem); }
+    .c-name { font-size: clamp(2.8rem, 10vw, 5rem); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    .fade-in, .letter-block, .promise { opacity: 1; transform: none; }
+    .letter-break { opacity: 0.3; }
+    .letter-greeting, .letter-closing { opacity: 1; }
+  }
+
+  /* Smooth compositing hints */
+  .letter-block, .promise, .fade-in { will-change: transform, opacity; }
+  .storm-item { will-change: transform, opacity; }
+  #petals-canvas, #constellation-canvas, #shooting-stars-canvas { will-change: contents; }
+  @keyframes jar-shake { 0%,100%{transform:rotate(0deg) scale(1.02)} 20%{transform:rotate(-3deg) scale(1.02)} 40%{transform:rotate(3deg) scale(1.02)} 60%{transform:rotate(-2deg) scale(1.02)} 80%{transform:rotate(2deg) scale(1.02)} }
+</style>
+</head>
+<body>
+
+<div id="envelope-intro">
+  <div class="envelope" id="envelope">
+    <div class="envelope-body"></div>
+    <div class="envelope-inner-v"></div>
+    <div class="envelope-flap"></div>
+    <div class="envelope-seal">♥</div>
+    <div class="envelope-name">Aidana</div>
+  </div>
+  <div class="envelope-tap">tap to open</div>
+</div>
+
+<div id="constellation-intro">
+  <canvas id="constellation-canvas"></canvas>
+  <div class="constellation-content" id="constellation-content">
+    <div class="c-label">A letter written in stars</div>
+    <div class="c-name">Aidana</div>
+    <div class="c-kazakh-name">Айдана</div>
+    <div class="c-sub">Letters united us once before.</div>
+    <div class="c-letters">This is one more.</div>
+    <div class="c-cta">tap to continue</div>
+  </div>
+</div>
+
+<canvas id="petals-canvas"></canvas>
+
+<div class="page-wrapper" id="page-wrapper" style="display:none;">
+
+  <section id="counter-section">
+    <div class="inner fade-in">
+      <div class="counter-label">Since the day our letters first crossed</div>
+      <div class="counter-since">March 30, 2024</div>
+      <div class="counter-grid">
+        <div class="counter-unit"><div class="counter-number" id="c-days">0</div><div class="counter-unit-label">Days</div></div>
+        <div class="counter-sep">·</div>
+        <div class="counter-unit"><div class="counter-number" id="c-hours">0</div><div class="counter-unit-label">Hours</div></div>
+        <div class="counter-sep">·</div>
+        <div class="counter-unit"><div class="counter-number" id="c-minutes">0</div><div class="counter-unit-label">Minutes</div></div>
+        <div class="counter-sep">·</div>
+        <div class="counter-unit"><div class="counter-number" id="c-seconds">0</div><div class="counter-unit-label">Seconds</div></div>
+      </div>
+      <div class="counter-subtext">...and every single one of them yours.</div>
+    </div>
+    <div class="scroll-hint">Scroll</div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="timezone-section">
+    <div class="inner fade-in">
+      <div class="tz-row">
+        <div class="tz-block"><div class="tz-city">Funchal</div><div class="tz-time" id="tz-funchal">--:--</div></div>
+        <div class="tz-divider">♥</div>
+        <div class="tz-block"><div class="tz-city">Semey</div><div class="tz-time" id="tz-semey">--:--</div></div>
+      </div>
+      <div class="tz-message">In both places, at the very same moment — I am thinking of you.</div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="letter-section">
+    <div class="letter-container">
+      <div class="letter-header">
+        <div class="letter-header-ornament">❧</div>
+        <div class="letter-header-title">Things I've never written down — until now</div>
+      </div>
+      <div class="letter-greeting" id="letter-greeting">My dearest Aidana,</div>
+      <div class="letter-block"><p class="letter-text">I love your <em>brown eyes</em> — the way they're shaped, so elegant, always looking seductive and gentle at the very same time. I could get lost in them every single time I look at you, and I always do.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">Your <em>smile</em> — above everything else. When you smile, my heart melts and the entire world disappears. There is nothing and no one else. Just you, being absolutely stunning.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">I love how you always <em>care about us</em>. How you do your best to keep us close, to make sure we are always connected. You fight for us — and I notice every single time you do.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">I love how you try to <em>understand me</em> — how patient you are, how you never give up on figuring out what I mean even when I struggle to say it. That patience is a gift I will never take for granted.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">You <em>support me</em> no matter what. Even when things are hard, even when I doubt myself — you are there. Steady. Unwavering. You have no idea how much strength that gives me.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">I love how <em>passionate</em> you become when you talk about the things you love. Your eyes light up, your voice changes — and I just want to sit there and listen to you forever.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">I love that you are <em>not afraid to be yourself</em>. Unapologetically, beautifully, completely you. That courage makes me fall for you a little more every single day.</p></div>
+      <div class="letter-break">· · ·</div>
+      <div class="letter-block"><p class="letter-text">There are a <em>thousand little things</em> I notice about you that I have never said out loud — the way you laugh, the way you move, the way you make even ordinary moments feel extraordinary.</p></div>
+      <div class="letter-closing" id="letter-closing">With all my love, always — Ivan</div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="ificould-section">
+    <div class="inner fade-in">
+      <div class="ificould-label">If I could reach through this screen</div>
+      <!-- ★ PLACEHOLDER — Replace with your own words ★ -->
+      <div class="ificould-text">I would hold your face in my hands, look into those <em>beautiful brown eyes</em>, and tell you that you are the most extraordinary person I have ever known. And then I would kiss you — slowly — and never let go.</div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="map-section">
+    <div class="inner">
+      <div class="map-label fade-in">The distance between us</div>
+      <div class="map-distance fade-in">7,242 km — but not forever.</div>
+      <canvas id="map-canvas"></canvas>
+      <div class="map-message" id="map-message">One day, we will stand together in <em style="color:var(--rose-pale);font-style:normal;">Verona</em> — the city of lovers. And the distance will finally be just a memory.</div>
+      <div class="map-moonlight" id="map-moonlight">Your name means <em>moonlight</em>. And across all these kilometres, you are still the brightest thing in my sky.</div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="jar-section">
+    <div class="inner">
+      <div class="jar-title">A jar of reasons</div>
+      <div class="jar-subtitle">Little things I love about you</div>
+      <div class="jar-visual" id="jar" onclick="pullNote()">
+        <div class="jar-lid"></div>
+        <div class="jar-body"><div class="jar-notes-inside" id="jar-notes-inside"></div></div>
+      </div>
+      <div class="jar-click-text">tap the jar</div>
+      <div class="jar-pulled-note"><div class="jar-note-content" id="jar-note-text"></div></div>
+      <div class="jar-counter" id="jar-counter"></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="storm-section">
+    <div id="storm-container"></div>
+    <div class="inner" style="position:relative;z-index:2;">
+      <div class="storm-text fade-in">
+        <div class="storm-main">I want to give you <em>endless letters</em>. Infinite kisses. And a <em>lifetime</em> of both.</div>
+        <div class="storm-sub">Every letter, every kiss — yours. Always.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="promises-section">
+    <div class="inner">
+      <div class="promises-title">My promises to you</div>
+      <!-- ★ PLACEHOLDER — Write your own promises ★ -->
+      <div class="promise"><div class="promise-number">I</div><p class="promise-text">I promise to <em>always write you letters</em> — because it is how we began, and I never want to stop beginning with you.</p></div>
+      <div class="promise"><div class="promise-number">II</div><p class="promise-text">I promise to <em>close this distance</em> — no matter how long it takes, no matter what it takes. Verona is waiting for us.</p></div>
+      <div class="promise"><div class="promise-number">III</div><p class="promise-text">I promise to <em>love you louder</em> every day — in every language, in every letter, in every silence between us that says more than words ever could.</p></div>
+    </div>
+  </section>
+
+  <div class="section-divider"></div>
+
+  <section id="finale-section">
+    <canvas id="shooting-stars-canvas"></canvas>
+    <div class="inner fade-in" style="position:relative;z-index:2;">
+      <div class="finale-heart">♥</div>
+      <div class="finale-kazakh">Мен сені сүйемін</div>
+      <div class="finale-translation">I love you — in every language my heart knows</div>
+      <div class="finale-divider"></div>
+      <div class="finale-message">I could write a thousand more letters and still not capture everything I feel when I look at you. You are my favourite thing about every single day, Aidana. From our very first letter to this one — and to every one that follows.</div>
+      <div class="finale-sign">Forever yours, Ivan ♥</div>
+      <div class="finale-date">Valentine's Day, 2026</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const envelopeEl=document.getElementById('envelope'),envelopeIntro=document.getElementById('envelope-intro'),constellationIntro=document.getElementById('constellation-intro');
+envelopeIntro.addEventListener('click',()=>{envelopeEl.classList.add('open');setTimeout(()=>{envelopeIntro.classList.add('hidden');constellationIntro.classList.add('active');initConstellation();setTimeout(()=>{envelopeIntro.style.display='none'},1200)},900)});
+
+function initConstellation(){
+  const canvas=document.getElementById('constellation-canvas'),ctx=canvas.getContext('2d');
+  let w,h,stars=[],animProgress=0,phase='scatter';
+  function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+  function heartPts(cx,cy,sz,n){const pts=[];for(let i=0;i<n;i++){const t=(i/n)*Math.PI*2;pts.push({x:cx+sz*Math.pow(Math.sin(t),3),y:cy-sz*(0.8125*Math.cos(t)-0.3125*Math.cos(2*t)-0.125*Math.cos(3*t)-0.0625*Math.cos(4*t))})}return pts}
+  const N=100,cx=w/2,cy=h/2,sz=Math.min(w,h)*0.28,targets=heartPts(cx,cy,sz,N);
+  for(let i=0;i<N;i++)stars.push({x:Math.random()*w,y:Math.random()*h,tx:targets[i].x,ty:targets[i].y,sz:Math.random()*2+0.6,tw:Math.random()*Math.PI*2,sp:Math.random()*0.02+0.008});
+  setTimeout(()=>{phase='forming'},300);
+  function animate(){
+    ctx.clearRect(0,0,w,h);if(phase==='forming')animProgress=Math.min(animProgress+0.009,1);
+    const e=1-Math.pow(1-animProgress,3);
+    if(e>0.65){const la=(e-0.65)/0.35*0.1;ctx.strokeStyle=`rgba(196,114,127,${la})`;ctx.lineWidth=0.5;for(let i=0;i<stars.length;i++){const s=stars[i],n=stars[(i+1)%stars.length];ctx.beginPath();ctx.moveTo(s.x+(s.tx-s.x)*e,s.y+(s.ty-s.y)*e);ctx.lineTo(n.x+(n.tx-n.x)*e,n.y+(n.ty-n.y)*e);ctx.stroke()}}
+    stars.forEach(s=>{s.tw+=s.sp;const a=0.4+0.5*Math.sin(s.tw),px=s.x+(s.tx-s.x)*e,py=s.y+(s.ty-s.y)*e;ctx.beginPath();ctx.arc(px,py,s.sz,0,Math.PI*2);ctx.fillStyle=`rgba(232,188,194,${a})`;ctx.fill();const g=ctx.createRadialGradient(px,py,0,px,py,s.sz*3);g.addColorStop(0,`rgba(196,114,127,${a*0.2})`);g.addColorStop(1,'transparent');ctx.beginPath();ctx.arc(px,py,s.sz*3,0,Math.PI*2);ctx.fillStyle=g;ctx.fill()});
+    if(e>0.85)document.getElementById('constellation-content').classList.add('visible');
+    if(phase!=='done')requestAnimationFrame(animate)
+  }
+  animate();
+  constellationIntro.addEventListener('click',()=>{phase='done';constellationIntro.classList.add('hidden');document.getElementById('page-wrapper').style.display='flex';document.getElementById('petals-canvas').classList.add('visible');startCounter();startTimezones();initPetals();initScrollObservers();setTimeout(()=>{constellationIntro.style.display='none'},1000)})
+}
+
+function initPetals(){
+  const c=document.getElementById('petals-canvas'),ctx=c.getContext('2d');let petals=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}resize();window.addEventListener('resize',resize);
+  const colors=['rgba(196,114,127,','rgba(212,147,158,','rgba(232,188,194,','rgba(201,165,90,'];
+  const count=Math.min(35,Math.floor(window.innerWidth*0.025));
+  for(let i=0;i<count;i++)petals.push({x:Math.random()*c.width,y:Math.random()*c.height,w:Math.random()*6+3,h:Math.random()*3+2,rot:Math.random()*Math.PI*2,rotSpeed:(Math.random()-0.5)*0.01,vy:Math.random()*0.3+0.1,vx:(Math.random()-0.5)*0.15,sway:Math.random()*Math.PI*2,swaySpeed:Math.random()*0.015+0.005,color:colors[Math.floor(Math.random()*colors.length)],alpha:Math.random()*0.25+0.08});
+  function animate(){ctx.clearRect(0,0,c.width,c.height);petals.forEach(p=>{p.sway+=p.swaySpeed;p.x+=p.vx+Math.sin(p.sway)*0.3;p.y+=p.vy;p.rot+=p.rotSpeed;if(p.y>c.height+15){p.y=-15;p.x=Math.random()*c.width}if(p.x<-15)p.x=c.width+15;if(p.x>c.width+15)p.x=-15;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.beginPath();ctx.ellipse(0,0,p.w,p.h,0,0,Math.PI*2);ctx.fillStyle=p.color+p.alpha+')';ctx.fill();ctx.restore()});requestAnimationFrame(animate)}animate()
+}
+
+const START=new Date('2024-03-30T00:00:00');
+function startCounter(){function update(){let d=Math.floor((new Date()-START)/1000);const days=Math.floor(d/86400);d%=86400;const hrs=Math.floor(d/3600);d%=3600;const mins=Math.floor(d/60);const secs=d%60;document.getElementById('c-days').textContent=days;document.getElementById('c-hours').textContent=String(hrs).padStart(2,'0');document.getElementById('c-minutes').textContent=String(mins).padStart(2,'0');document.getElementById('c-seconds').textContent=String(secs).padStart(2,'0')}update();setInterval(update,1000)}
+
+function startTimezones(){function update(){const now=new Date();document.getElementById('tz-funchal').textContent=now.toLocaleTimeString('en-GB',{timeZone:'Atlantic/Madeira',hour:'2-digit',minute:'2-digit',second:'2-digit'});document.getElementById('tz-semey').textContent=now.toLocaleTimeString('en-GB',{timeZone:'Asia/Almaty',hour:'2-digit',minute:'2-digit',second:'2-digit'})}update();setInterval(update,1000)}
+
+function initScrollObservers(){
+  const fadeObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');fadeObs.unobserve(e.target)}})},{threshold:0.15});document.querySelectorAll('.fade-in').forEach(el=>fadeObs.observe(el));
+  const blockObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('revealed');blockObs.unobserve(e.target)}})},{threshold:0.2});document.querySelectorAll('.letter-block, .letter-break').forEach(el=>blockObs.observe(el));
+  const textObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';textObs.unobserve(e.target)}})},{threshold:0.5});textObs.observe(document.getElementById('letter-greeting'));textObs.observe(document.getElementById('letter-closing'));
+  const promObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('revealed');promObs.unobserve(e.target)}})},{threshold:0.2});document.querySelectorAll('.promise').forEach(el=>promObs.observe(el));
+  const mapObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){initMap();mapObs.unobserve(e.target)}})},{threshold:0.2});mapObs.observe(document.getElementById('map-canvas'));
+  const stormObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){startStorm();stormObs.unobserve(e.target)}})},{threshold:0.15});stormObs.observe(document.getElementById('storm-section'));
+  const starObs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){initShootingStars();starObs.unobserve(e.target)}})},{threshold:0.15});starObs.observe(document.getElementById('finale-section'))
+}
+
+function initMap(){
+  const canvas=document.getElementById('map-canvas'),ctx=canvas.getContext('2d');
+  const rect=canvas.getBoundingClientRect();canvas.width=rect.width*2;canvas.height=rect.height*2;ctx.scale(2,2);
+  const W=rect.width,H=rect.height;
+  const funchal={x:W*0.1,y:H*0.7,label:'Funchal'},semey={x:W*0.9,y:H*0.3,label:'Semey'},verona={x:W*0.42,y:H*0.45,label:'♥ Verona'};
+  let progress=0,phase2=0,showVerona=false;
+  function drawDot(x,y,label,alpha,glow){const g=ctx.createRadialGradient(x,y,0,x,y,glow?20:12);g.addColorStop(0,`rgba(196,114,127,${alpha*0.3})`);g.addColorStop(1,'transparent');ctx.beginPath();ctx.arc(x,y,glow?20:12,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fillStyle=`rgba(196,114,127,${alpha})`;ctx.fill();ctx.font="300 10px 'Noto Sans',sans-serif";ctx.fillStyle=`rgba(240,235,224,${alpha*0.8})`;ctx.textAlign='center';ctx.fillText(label,x,y-14)}
+  function drawLine(x1,y1,x2,y2,prog,color){const ex=x1+(x2-x1)*prog,ey=y1+(y2-y1)*prog;ctx.beginPath();ctx.moveTo(x1,y1);const cpx=(x1+ex)/2,cpy=Math.min(y1,ey)-30;ctx.quadraticCurveTo(cpx,cpy,ex,ey);ctx.strokeStyle=color;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([])}
+  function animate(){
+    ctx.clearRect(0,0,W,H);if(progress<1)progress=Math.min(progress+0.012,1);
+    drawDot(funchal.x,funchal.y,funchal.label,1,true);drawDot(semey.x,semey.y,semey.label,Math.min(progress*2,1),true);drawLine(funchal.x,funchal.y,semey.x,semey.y,progress,'rgba(196,114,127,0.35)');
+    if(progress>=1){phase2=Math.min(phase2+0.015,1);if(phase2>0.1){const va=Math.min((phase2-0.1)/0.5,1);drawDot(verona.x,verona.y,verona.label,va,true);const lp=Math.min((phase2-0.2)/0.6,1);if(lp>0){drawLine(funchal.x,funchal.y,verona.x,verona.y,lp,'rgba(201,165,90,0.3)');drawLine(semey.x,semey.y,verona.x,verona.y,lp,'rgba(201,165,90,0.3)')}if(!showVerona&&va>0.8){showVerona=true;document.getElementById('map-message').classList.add('visible');document.getElementById('map-moonlight').classList.add('visible')}}}
+    if(phase2<1)requestAnimationFrame(animate)
+  }animate()
+}
+
+function startStorm(){
+  const container=document.getElementById('storm-container'),items=['💌','💋','✉️','♥','💌','💋','✉️','💕','💌','💋'];let count=0;const max=60;
+  function spawn(){if(count>=max)return;const el=document.createElement('div');el.className='storm-item';el.textContent=items[Math.floor(Math.random()*items.length)];el.style.left=Math.random()*100+'%';el.style.fontSize=(Math.random()*1+0.8)+'rem';el.style.setProperty('--end-rot',(Math.random()*60-30)+'deg');el.style.animationDuration=(Math.random()*4+4)+'s';el.style.animationDelay=(Math.random()*0.3)+'s';container.appendChild(el);count++;el.addEventListener('animationend',()=>el.remove())}
+  const interval=setInterval(()=>{const batch=Math.floor(Math.random()*3)+2;for(let i=0;i<batch;i++)spawn();if(count>=max)clearInterval(interval)},400)
+}
+
+function initShootingStars(){
+  const c=document.getElementById('shooting-stars-canvas'),ctx=c.getContext('2d'),section=document.getElementById('finale-section');
+  c.width=section.offsetWidth;c.height=section.offsetHeight;let shooters=[];
+  function spawnStar(){shooters.push({x:Math.random()*c.width*0.7,y:Math.random()*c.height*0.4,len:Math.random()*80+40,speed:Math.random()*4+3,angle:Math.PI/4+(Math.random()-0.5)*0.3,alpha:1,decay:Math.random()*0.015+0.008})}
+  function animate(){ctx.clearRect(0,0,c.width,c.height);shooters.forEach(s=>{const dx=Math.cos(s.angle)*s.speed,dy=Math.sin(s.angle)*s.speed;s.x+=dx;s.y+=dy;s.alpha-=s.decay;if(s.alpha>0){const tx=s.x-Math.cos(s.angle)*s.len,ty=s.y-Math.sin(s.angle)*s.len;const grad=ctx.createLinearGradient(tx,ty,s.x,s.y);grad.addColorStop(0,'transparent');grad.addColorStop(1,`rgba(232,188,194,${s.alpha})`);ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(s.x,s.y);ctx.strokeStyle=grad;ctx.lineWidth=1.5;ctx.stroke()}});shooters=shooters.filter(s=>s.alpha>0);if(Math.random()<0.03)spawnStar();requestAnimationFrame(animate)}
+  for(let i=0;i<3;i++)setTimeout(spawnStar,i*600);animate()
+}
+
+const jarReasons=["The way you say my name — it sounds different when you say it, like it finally means something.","How your nose scrunches slightly when you laugh really hard.","The way you always fix my collar without me asking.","How you get so excited about the little things most people ignore.","Your voice when you're sleepy — the softest, warmest sound in the world.","The way you hold my hand a little tighter when you're nervous.","How you always remember the small things I say, even when I forget them myself.","Your stubbornness — because it means you never give up on what matters.","The way you dance when you think nobody's watching.","How safe I feel when I'm with you, like nothing can touch us.","Your curiosity — the way you ask questions about everything and truly want to know.","How you make sure I've eaten before you take care of yourself.","The little sounds you make when you're thinking really hard.","The way your whole face lights up when you see me after being apart.","How you always try to make the people around you feel seen and loved."];
+let jarPulled=[],jarAvail=[...jarReasons];
+(function fillJar(){const el=document.getElementById('jar-notes-inside'),cols=['#c4727f','#9e4f5c','#d4939e','#c9a55a','#a08040','#e8bcc2'];for(let i=0;i<18;i++){const n=document.createElement('div');n.className='jar-mini-note';n.style.background=cols[Math.floor(Math.random()*cols.length)];n.style.setProperty('--rot',(Math.random()*40-20)+'deg');n.style.opacity=0.35+Math.random()*0.35;el.appendChild(n)}})();
+function pullNote(){if(!jarAvail.length){jarAvail=[...jarReasons];jarPulled=[]}const i=Math.floor(Math.random()*jarAvail.length),note=jarAvail.splice(i,1)[0];jarPulled.push(note);const el=document.getElementById('jar-note-text');el.classList.remove('visible');const jar=document.getElementById('jar');jar.style.animation='none';jar.offsetHeight;jar.style.animation='jar-shake 0.4s ease';setTimeout(()=>{el.textContent='"'+note+'"';el.classList.add('visible');document.getElementById('jar-counter').textContent=jarPulled.length+' of '+jarReasons.length+' reasons'},300)}
+</script>
+</body>
+</html>
